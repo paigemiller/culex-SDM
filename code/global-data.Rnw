@@ -1,0 +1,103 @@
+\documentclass[10pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[american]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{natbib}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{fancyvrb}
+\usepackage{Sweave}
+
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{xleftmargin=2em}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{xleftmargin=2em}
+\DefineVerbatimEnvironment{Scode}{Verbatim}{xleftmargin=2em}
+\fvset{listparameters={\setlength{\topsep}{0pt}}}
+\renewenvironment{Schunk}{\vspace{\topsep}}{\vspace{\topsep}}
+
+\setlength{\parskip}{.1in}  
+\setlength{\parindent}{0.0in}  
+
+\setcounter{tocdepth}{1}
+%\setcounter{secnumdepth}{1}
+
+\newcommand{\R}{\textsf{R}}
+\newcommand{\code}[1]{\texttt{#1}}
+  
+%\SweaveOpts{eps=FALSE, pdf=TRUE, png=TRUE, keep.source=FALSE, echo=TRUE, eval=TRUE}
+  
+\title{Global environmental data}
+\author{John M. Drake}
+  
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\maketitle
+  
+\section{Introduction}
+  
+To proceed with this project properly, I decided that it would be more appropriate to work with global data. Previously, only data from Africa had been downloaded and pre-processed.
+
+
+<<test-get-data>>=
+g <- getData('worldclim', var='tmin', res=0.5, lon=5, lat=45)
+plot(g)
+@
+
+
+<<>>=
+
+# Here is a loop to function to retrieve and combine high resolution  data
+require(raster)
+
+get.global <- function(variable='tmin'){
+  require(raster)
+
+ #define latitude and longitude for 10 tiles
+  lats <- seq((90-18), (-90+18), by= -36)
+  lons <- seq(-165, 165, by=30)  # set to 165
+  lat.lon <- expand.grid(lats, lons)
+
+  #load the tiles
+  tiles <- list()
+  for(i in 1:dim(lat.lon)[1]){
+    tiles[[i]] <- getData('worldclim', var=variable, res=.5, lat=lat.lon[i,1], lon=lat.lon[i,2])
+  }
+
+  #merge tiles into a single map
+  map <- raster::merge(tiles[[1]],tiles[[2]])
+
+  x <- tiles
+  x$filename <- 'test.tif'
+  x$overwrite <- TRUE
+  map <- do.call(merge, x)
+ 
+  #return the final map
+  return(map)
+}
+
+test.data <- get.global()
+
+variable.list <- c('tmin','tmax','prec','bio')
+
+i <- 1
+for(var in variable.list){
+  data0 <- get.global(variable=var)
+  save(data0,file=paste(var,'.RData',sep=''))  
+  if(i==1){
+    data <- stack(data0)
+  }
+  else {
+    data <- stack(data, data0)
+  }
+  i <- i+1
+}
+
+save.image('global-data.RData')
+
+@
+
+
+\end{document}
