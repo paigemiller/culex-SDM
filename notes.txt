@@ -1,0 +1,6 @@
+- using the data we already have, we have absence points in three countries. Can we predict where else this species might lie based on *current* environmental data? The idea is to point out places where *Culex* might be. There *is* one reason why mosquitoes may actually live only in those places: perhaps culex there is a *sink* that is transported to African cities from shipping coming from sources in the US (like Nigeria and Kenya). 
+
+
+- can we find current culex data to test over-time predictions?
+
+- Gio homework: look at predicting over african environmental data we already have and prepare support vector machine info
