@@ -2,7 +2,7 @@ setwd('~/Desktop/culex/culex-SDM/')
 
 # load libraries
 require(dismo)
-require(raster) #needed?
+require(raster) 
 require(maptools)
 #require(spatstat)
 #require(rworldmap)
@@ -48,15 +48,60 @@ assign(name, environmental.data[[12+i]]-environmental.data[[i]])
 
 # names(environmental.data)  # shows all of the variables in our set
 
-load('mosq-data/culex.RData')  # this should contain everything I've jsut repeated
+load('mosq-data/culex-v2.RData')  # this should contain everything I've just repeated, but there are four versions
 par(mar=c(1,1,1,1), mfrow=c(9,10))
 for(i in 1:86){
   hist(environmental.data[[i]], xlab='', ylab='', axes=FALSE, main=variable.names[i,1], cex.main=0.7)
   axis(1)
 }
 
+# load Cx. pipiens data
 pipiens <- read.csv('mosq-data/pipiens.csv', skip=2)
 pipiens.coords <- cbind(pipiens$DecimalLongitude, pipiens$DecimalLatitude)
-plot(pipiens.coords, pch=20, cex=0.6)
 
+quinq <- read.csv('mosq-data/quinq.csv', skip=2)
+quinq.coords <- cbind(quinq$DecimalLongitude, quinq$DecimalLatitude)
+
+salinarius <- read.csv('mosq-data/salinarius.csv', skip=2)
+salinarius.coords <- cbind(salinarius$DecimalLongitude, salinarius$DecimalLatitude)
+
+plot(quinq.coords, pch=20, cex=0.6, xlim=c(-25,55))
+points(pipiens.coords, xlim=c(-25,55), pch=21, cex=0.6)
 plot(wrld_simpl, add=TRUE, border='grey')  # overlay the world
+
+# overlaying pipiens presence points on January min temp
+plot(environmental.data.rs[[1]])
+points(pipiens.coords, pch=21, bg='yellow', cex=0.6)
+# getting the data for just those points
+pipiens.presence <- data.frame(extract(environmental.data.rs, pipiens.coords))
+z <- which(is.na(pipiens.presence[,1]))
+pipiens.presence <- pipiens.presence[-z,]  # now the env data for cells where coords are found
+n.presence <- dim(pipiens.presence)[1]
+pts.presence <- pipiens.coords[-z,]  # and corresponding coordinates
+
+# simulate background data
+set.seed(3281994)
+backgr.pts <- randomPoints(environmental.data.rs, n.presence)
+data.background <- data.frame(extract(environmental.data.rs, backgr.pts))  # !! does this give the 86-wide vector of environmental data for each raster cell that backgr.pts is in?
+cols <- colorRampPalette(c('darkorange4', 'khaki1'), interpolate='linear')
+
+# plotting points on background of bioclim
+plot(environmental.data[[37]]/10, col=(cols(100)), main='Presence/background points')
+points(pipiens.coords, pch=21, bg='yellow', cex=0.6)
+n <- sample(n.presence, 100)
+points(backgr.pts[n,], pch=21, bg='grey', cex=0.6) #  too many to plot
+plot(wrld_simpl[wrld_simpl$REGION==2,], add=TRUE)
+legend('topright', pch=21, pt.bg=c('yellow','grey'), legend=c('Cx. pipiens', 'Background'), bty='n', cex=0.7)
+text(-17,-25,'Annual mean', pos=4, cex=0.8)
+text(-17,-28, 'temperature (degrees C)', pos=4, cex=0.8)
+
+# culex-v3.RData contains up to this point
+
+# split training and testing datasets 
+set.seed(3281994)
+train.presence.id <- sample(seq(1,n.presence),ceiling(0.8*n.presence))
+train.background.id <- sample(seq(1,n.presence),ceiling(0.8*n.presence))
+train.presence <- pipiens.presence[train.presence.id,]
+train.background <- data.background[train.background.id,]
+test.presence <- pipiens.presence[-train.presence.id,]
+test.background <- data.background[-train.presence.id,]
