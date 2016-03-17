@@ -1,0 +1,89 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\begin{document}
+
+\title{Notes on Instrumental Variables (IV) for data calibration project}
+
+\author{
+  Paige Miller
+}
+
+\maketitle
+
+\section{Instrumental Variables}
+   Method for estimation that is used in statistics, econometrics, and epidemiology when correlations are suspected between explanatory variables and the error term (due to omitted variables, measurement error, or other sources of simultaneity bias)
+  
+\section{Context}
+  \begin{itemize}
+  \item The basic situation is when we have y$_{i} = x_{i}'\beta + u_{i}$ for i = 1,..., \textit{N} where x$_{i}$ are explanatory variables that are correlated with u$_{i}$ which are error terms and $\beta$ is the parameter we wish to estimate
+  \item The method of IV seeks to replace the actual realized values of x$_{i}$ (which are correlated with the error terms) by predicted values of x$_{i}$ that are necessarily (1) related to the actual x$_{i}$ and (2) uncorrelated with u$_{i}$
+  \item Doing this allows us to obtain a consistent (i.e. with large enough number of samples, our estimate converges to the true population estimate) estimator of \textit{$\beta$} 
+  
+  \end{itemize} 
+
+\section{Requirements of IV}
+  \begin{itemize}
+  \item related to the explanatory variable(s) -- they are 'informative'
+  \item uncorrelated with errors -- they are 'valid'
+  \item \textbf{biggest problem} with using instrumental vars is that they have to have \textit{both} of these properties
+  \item Note that sometimes (in multiple regression setting) some explanatory vars may be 'endogenous' or correlated with error terms while others are 'exogenous' or uncorrelated with error terms but all instruments are required to have explanatory power for each endogenous variable \textit{after} conditioning on all remaining exogenous explanatory variables
+  \end{itemize}
+
+\section{Example case: Single endogenous (x$_{i}$), and single IV (z$_{i}$)}
+\begin{itemize}
+  \item Assume both x$_{i}$ and z$_{i}$ have mean = 0 for simplicity and all vectors are \textit{N}x1
+  \item Then for i=1,...\textit{N}
+  \begin{equation} \label{eq1}
+    \begin{split}
+    E(u_{i})=0, E(x_{i}u_{i}) \neq 0  \\
+    y_{i} = x_{i}\beta + u_{i} \\
+    y=X\beta + u \\
+    \end{split}
+    \end{equation}
+  \item The first stage regression (linear projection with IV) for i=1,...,\textit{N} and all vectors are \textit{N}x1 
+  \begin{equation} \label{eq2}
+      \begin{split}
+      x_{i} = z_{i}\pi + \gamma_{i} \\
+      X=Z\pi + \gamma \\
+      \end{split}
+      \end{equation}
+  \item where E(z$_{i}x_{i}$)=0 AND $\pi \neq 0$ so that the IV, z$_{i}$, is valid and informative, respectively
+\end{itemize}
+
+\section{Controversy of Ordinary Least Squares (OLS) vs. Two Stage Least Squares (2SLS)}
+  \begin{itemize}
+  \item OLS: goal is to minimize the differences between observed responses in data and responses predicted by the linear approximation of the data
+  \item 2SLS: "regression analysis technique that is used in the analysis of structural equations. This technique is the extension of the OLS method" - statsolutions.com.
+  \item motivation for using instrumental variables rather than OLS estimation is that we suspect the OLS estimates would be biased and inconsistent as a result of correlation between the error term and one or more of the explanatory variable(s)
+  \item If our instrumental variables are both valid (i.e. uncorrelated with the error
+  term) and informative (i.e. satisfying the requirements for identiÖcation), then we should expect the 2SLS parameter estimates to be quite different from the OLS parameter estimates
+  \item Found some material on comparing the two estimates using a Hausman test. Will read more into this later.
+  \end{itemize}
+  
+\section{Problems with IV for finite samples}
+  \begin{itemize}
+  \item Overfitting: describes the situation where researcher may include too many IVs, resulting in inflated R$^{2}$ values 
+  \item Weak IVs: describes the situation where researcher uses "weak" instruments (ie they are poor predictors of explanatory vars). This problem could result in bias towards $\beta_{OLS}$ if instrument is strictly valid or large inconsistency in $\beta_{IV}$
+  \item but insturment strength can be directly assesed because endogenous covariates and instruments are observable
+  \end{itemize}
+  
+\section{Questions}
+ \begin{itemize}
+  \item What is the relation of these ideas to the case of SDM?
+  \item What problems does this tackle for SDM?
+  \item What questions can we answer using these ideas?
+  \item How could this be a 'pre-processing' step for all data used in SDMs?
+  \end{itemize}
+  
+\begin{thebibliography}{1}
+\bibitem{latexcompanion} 
+ http://www.nuff.ox.ac.uk/teaching/economics/bond/instrumental%20variables1.pdf
+\bibitem{latexcompanion}
+The latest version of the ivreg2 command in Stata now implements a num-
+ber of these suggestions
+\bibitem{latexcompanion} 
+ $https://en.wikipedia.org/wiki/Instrumental_variable$
+\end{thebibliography}
+\end{document}

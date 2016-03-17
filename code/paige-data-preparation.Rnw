@@ -73,7 +73,8 @@ Finally, we load some auxiliary functions
   
 <<aux>>=
 #load auxiliary functions
-setwd("~/Paige")
+#setwd("~/Paige") #on lab comp
+setwd("~/Documents/culex-SDM/code")
 source('functions.R')   #project specific functions
 @
 
@@ -592,8 +593,8 @@ text(-17,-28, 'temperature (degrees C)', pos=4, cex=0.8)
 \section{LOBAG SDM for culex pipiens}
 <<split>>=
 #returns: A list of length n.votes containing the trained models 
-lobag <- lobag(p=pipiens.presence, a=data.background, n.votes=100)
-svm <- predictSvm(p=pipiens.presence, a=data.background, model=lobag)
+lobag <- lobag(p=train.presence, a=train.background, n.votes=100)
+svm <- predictSvm(p=test.presence, a=test.background, model=lobag)
 #distribution of probabilities for presence and absence points
 hist(svm[[1]]) #mostly high probability
 hist(svm[[2]]) #mostly low probability
