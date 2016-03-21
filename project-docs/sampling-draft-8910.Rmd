@@ -1,0 +1,37 @@
+---
+title: "ECOL 8910 - Sampling Bias in SDMs"
+author: "Paige Miller, Robert Richards, Giovanni Righi"
+date: "03/21/2016"
+output: html_document
+---
+
+#Background: 
+
+* Why SDMs? 
+    + Model species niche for conservation purposes
+    + Fundamental niche to inform invasive species
+    + Climate change scenarios
+* Major assumption for traditional SDMs is that the data used for callibration represent a random sample of the population being studied (Araujo & Guisan 2006)
+* Ways that opportunistic observations could exhibit geographic or environmental bias:
+    + museum and herbarium records
+    + distance to Universities, towns
+    + accesibility: difficult areas to collect samples from
+    + naturalistic interest: national parks
+* Methods to get around these issues/lack of consensus on which way to use: 
+    + Interdependence of observations: correcting number of df, adding spatial autocorrelation term (Lechstein et al. 2002), resampling plots at sufficient spatial distance (Guissan & Theurillat 2000)
+    + Manipulate the occurence data in order to remove the bias, by discarding or down-weighting records (de-biasing like in Dudik et al. 2005) (bias grids e.g. Syfert et al. 2013) across space; difficult if under-lying bias is unknown and if data has small sample sizes to begin with (Robbie's paper?, but see Shadt et al. 2013 recommends background manipulation to reduce overprediction or underprediction in certain areas, used simulated spp data). Can also remove occurences across environmental space. 
+    + Simulate types of bias (Fourcade et al. 2014) which created 12 bias combinations with a virtual and 2 real species. Five methods of sampling bias correction were used to assess the improvement of modeled distribuition relative to original distribution using MAXENT ![Figure 1 from Fourcade et al. 2014 ](/home/pbmpb13/Documents/culex-SDM/project-docs/journal.pone.0097122.g001.png) Data is available with links in the paper. Even though their goal was to provide a comprehensive review on how to deal with sampling bias, I don't think they accomplished this. They found that SDM output didn't differ too much depending on correction method used BUT results differed a TON depending on evaluation method used (AUC, Dgeo, Denv, Gover see fig. 4)
+    + Manipulate the background data: design the selection of the background data so they reflect the same sample selection bias as the occurence data, one way to do this is to examine records from other species to get an idea of survey efforts in the area (Philips et al. 2009)
+* __Study goals..??__
+
+#Methods:
+
+* Data collection: 
+* Biasing/data corruption:
+* Model types:
+* Evaluation:
+
+#Results:
+
+#Discussion:
+
