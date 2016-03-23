@@ -32,7 +32,7 @@ rastermean.unique<-rastersum/length(LOB)
 
 plot(rastermean.unique)
 
-### Environmental gridded thinning
+### Environmental grid thin
 unique.pca<-predict(pca,unique.x)
 ID <- c(1:length(unique.pca[,1]))
 unique.pca <- cbind(ID, unique.pca)
@@ -107,7 +107,17 @@ apply(as.data.frame(pts),1,function(x) plot(gBuffer(SpatialPoints(coords=matrix(
 par(new=T)
 plot(pts2,add=T,col='blue',pch=20,cex=2)
 
-pts.ind <- apply(pts, 1, function(x){which (pts2 %in% x)})
-dist.coords <- afr.pip.unique[pts.ind] #coordinates of pca points 
+pts.ind<-unique.x[which(pts2[,1] %in% pts[,1]),]
 
+#Lobag model for environmental distance thin
+LOB.pca.dist<-lobag.oc(pts.ind, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB.pca.dist[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB.pca.dist[[i]])
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.pca.dist<-rastersum/length(LOB)
+
+plot(rastermean.pca.dist)
 
