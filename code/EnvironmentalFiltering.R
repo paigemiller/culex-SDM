@@ -96,9 +96,9 @@ filterByProximity <- function(xy, dist, mapUnits = F) {
 }
 
 library(rgeos)
-require(sp)
+library(sp)
 pts <- unique.pca[,2:3]
-pts2 <- filterByProximity(pts,dist=2, mapUnits=T)
+pts2 <- filterByProximity(pts,dist=2, mapUnits=F)
 
 plot(pts)
 axis(1)
@@ -121,3 +121,4 @@ rastermean.pca.dist<-rastersum/length(LOB)
 
 plot(rastermean.pca.dist)
 
+save.image("envFilt.Rdata")

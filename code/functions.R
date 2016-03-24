@@ -1,8 +1,6 @@
 #Script with support functions of Anopheles arabiensis modeling project
 #Created: May 5, 2011 by John M. Drake (jdrake@uga.edu)
 
-
-
 #function to get species coordinates
 get.sp.coords <- function(sp, plot=FALSE, bbox=NULL){
   require(sp)
