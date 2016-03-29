@@ -10,7 +10,6 @@ get.sp.coords <- function(sp, plot=FALSE, bbox=NULL){
   return(SpatialPoints(data, proj4string=CRS('+proj=longlat'), bbox=bbox))
 }
 
-
 #function to rescale a raster by subtracting mean and dividing by standard deviation
 rescale.raster <- function(data0, data1=NULL){
   # Rescale a raster by subtracting mean and dividing by standard deviation

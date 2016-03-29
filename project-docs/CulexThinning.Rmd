@@ -1,0 +1,535 @@
+---
+title: "Methods of limiting spatial sampling bias in species distribution modeling: _Culex pipiens_, a case study"
+author: "Robert Richards, Paige Miller, Gio Righi"
+date: "March 25, 2016"
+output: pdf_document
+---
+# Introduction
+
+Ecologists, managers, and public health officials use species distribution models (SDMs) to predict the likelihood of species presence across a landscape of importance. Construction of these models requires "training" data representing known locations where the species of interest is present and absent. Presence-absence data produced through systematic samples chosen unbiasedly from the landscape of interest are the gold standard in this training data. Unfortunately examples of such data sets are few and far between. Much more common are examples of "Presence-only" data such as records from natural history museums. Though presence-only records provide less information than systematic presence-absence records (and limit the types of models that can be used) this data format can provide distinct advantages as well. 
+
+  Notably, these methods are not subject to the measurement uncertainty associated with absence records. If a species is detected at a location then it is definitively present in that location at that time. If, however, a species is not detected at a given location that species may be genuinely absent, or simply have gone undetected by the researcher despite its presence. Often even true absences may bear the mark of dispersal barriers or preventive biotic interactions leading to areas that are environmentally habitable by the species being marked as absences. Though presence-only data can also bear the imprint of such non-environmental variables (species may be detected in sink habitats as a result of migration from permanently habitable source habitats) (Pulliam paper), this burden is generally considered to weigh more heavily on absence data. Presence only data are not, however, without other issues for species distribution modelers. 
+  
+  Generally, presence-only models rely on the assumption that presence data are sampled unbiasedly from the distribution of a species. Violation of this assumption can cause problems with both model fitting and model evaluation (Hijmans 2012). A number of methods have been proposed for addressing this problem of spatial sampling bias. They tend to fall into two major categories: (1) Thinning, a process in which a subset of presence points is selected for model fitting in such a way as to minimize spatial or environmental bias, and (2) weighting, in which points are assigned weights for model fitting based on the inverse of their association with sampling bias (e.g. Syfert et al. 2013, Stolar and Nielsen 2014). Currently this work largely focuses on the former family of methods with plans to implement novel presence-only weighting methods in the future.
+
+  Thinning has been implemented and tested in a number of different ways. The distinctions between these methods fall along 2 distinct axes: (1) the method (grid based, distance based, or cluster analysis based) used to thin the data points and (2) the axes (geographic or environmental) along which the thinning of points is performed (Fig 1). Likely the most common form of thinning performed in modern SDM is the type implemented in MaxEnt (the leading presence-background SDM). MaxEnt selects one presence point per grid-cell of the environmental covariate grid. This process can also be interpreted as MaxEnt assigning a presence or non-presence identity to each grid-cell based on whether a presence point is found inside of it. (Phillips 2006, something else too). Grid-based geographic filtering has been used with other SDMs as well (examples). Boria et al. (2014) propose and test an alternative method of geographic thinning in which a minimum allowable distance between points is imposed on presence data using an algorithm that maximizes the total number of retained points given this constraint (see Methods for further details). 
+  
+  Recently, efforts have been made to identify which data processing methods, including Thinning (see Table 1), provide the best model performance in the presence of spatially biased data. Some focus on the merits of geographic thining (e.g Boria et al. 2014, Kramer-Schadt et al. 2013) while others attempt to compare performance across environmental and geographic methods (Varela et al. 2014, Fourcade et al. 2014). Results of such studies have been mixed. Varela et al. (2014) compare the relative performance of grid-based environmental and spatial thinning to find the clear superiority of environmental methods. They themselves highlight, however, that this relative performance may be context specific. Their study comprised the Iberian peninsula, a particularly environmentally heterogeneous area. Environmental thinning may perform better in this setting because it retains a larger number of unique points in environmental space while geographic thinning will tend to discard neighboring points that are in fact very different environmentally. Alternatively, spatial heterogeneity of environment may result in a spatial sampling bias not manifesting as a clear bias in environmental space. This interpretation would suggest that environmental thinning ought to be less able to correct the bias in the data. Interestingly, Fourcade et al. (2014), in a comparison of a number of different methods for limiting the effect of spatial sampling bias on MaxEnt modeling, found "Systematic Sampling", a methodological equivalent of our geographic grid based thinning, to be the generally superior method. This discrepancy between results could be due to differences in the taxa modeled, the geographich region (North America for Fourcade et al.), or simply the fact that the latter group's implementation of environmental thinning was implemented using a cluster analysis, rather than grid based thinning. Though more work certainly remains to be done in this area, thinning performance is beginning to appear to be both system and implementation dependent.
+ 
+  Here we make an initial attempt at applying the 2 primary data thinning methods across gegraphic and environmental space at a series of resolutions in an effort to measure not the overall performance of these models but instead the similarity in the predictions that they produce. We hope to use these analyses to understand if predictions based on different data processing methods differ substantially and how they differ. We also hope to begin to tackle the problem of spatial resolution in thinning methods by quantifying both the similarity between the predictions produced by a given model at multiple resolutions and beginning to understand the ways in which these predictions tend to differ. 
+  
+# Methods 
+
+## Data
+  
+  Presence records for 3 species of Culex mosquitoes (C. pipiens, C. quinquefasciatus, and C. salinarius) on the continent of Africa were collected in the Vector Map database (http://vectormap.si.edu/dataportal.htm). 
+  Environmental covariate rasters were downloaded from the BIOCLIM database (Hijmans et al. 2005, http://www.worldclim.org/bioclim). Monthly temperature range variables were also constructed (Drake, unpublished work). Data were rescaled by substracting the raster mean and dividing by the raster standard deviation. Variables that are ecdf transformed are not rescaled.
+   
+## Data Processing
+  
+### Spatial Thinning
+  
+  Distance-based thinning was performed using the R package spThin (Aiello-Lammens et al. 2015). The thinning algorithm accepts a minimum allowable distance (x) between points, calculates the number of occurrence records within this distance for each presence point, and identifies the record(s) with the greatest number of neighbors within x. One of these records is then eliminated at random and the process is repeated until no remaining point has a neighboer within x. This process is iterated a set number of times and the output(s) with the maximum number of remaining points are provided for training. Thinning was performed at a series of scales (x=10km, 100km, 500km) to assess the effect of thinning distance on model output. 
+  
+  Grid-based thinning was performed using the gridSample function in the R package dismo (Hijmans et al. 20??). We provide the function with a raster grid of a specific resolution (cell size) and (much like the MaxEnt functionality discussed above) one presence point is chosen at random in each grid cell. This type of thinning was performed at the resolution of the environmental variables (.1666 degrees) as well as lower resolutions (1 and 5 degrees). Due to the the large spatial extent of Africa the actual distance in meters corresponding to a degree varies substantially latitudinally across the continent. Nonetheless, these 3 resolutions are roughly equivalent to the three scales applied in the distance based spatial thinning.
+  
+### Environmental thinning
+  
+  We performed a principal components analysis (PCA) of the re-scaled baseline environmental data. Approximately 55% of the variation in environmental covariates was explained by the first two principle components (Drake, unpublished work). Thus, we sought to test whether filtering points in two-dimensional PCA space, defined by the first two principal components, is a viable option for correcting spatially biased data. Two methods of environmental thinning in PCA space were tested: (1) distance thinning, which specifies a minimum distance between any pair of points in two-dimensional PCA space and (2) grid-based thinning, which is similar to grid based thinning in geographical space, and eliminates all but one point per grid cell. We provide functions for both methods. 
+  
+  For distance thinning in environmental space, distances between points were calculated using the spDists function in the R package sp which constructs a vector of Euclidean distances between a matrix of 2D points. Then, we thinned data by setting a minimum distance , in PCA space, that each point had to be from any other point. Points within 1 unit from another point were eliminated from analysis. The number of points kept was maximized for each value of x. 
+  
+  Grid-based thinning in PCA space was performed by imposing a raster layer over the first two principal component axes and assigning a grid of specified resolution to that raster. Then, any points in the same grid cell were eliminated. A resolution of 0.1 units was used for this analysis and left around 55 points for training. 
+  
+  Species Distribution Models
+  LOBAG-OC (Drake 2014) was the primary method used to model Culex distributions. Unlike the more widely used MaxEnt LOBAG-OC is a true presence-only method in that the model is trained using exclusively the point presence data, with no requirement for randomly sampled background (or "pseudo-absence") points. 
+  
+### Re-sampling  
+
+  As a first attempt at applying a weighting approach to correcting sampling bias for LOBAG-OC models we performed biased resampling of presence points. Presence points were sampled with replacement using the sample function in base R. The likelihood of a given point being sampled was determined by characteristic weights representing the inverse of the spatial sampling bias. This underlying bias weighting can be drawn from some underlying distribution across the landscape which we suspect to cause, or be directly related to, the spatial bias in the data. In this case the points were weighted in accordance with the inverse of the population density (taken from the Socioeconomic Data and Applications Center, SEDAC) based on intuition that mosquito sampling may occur disproportionately in population dense areas. Future methods will involve tuning the resampling correction via adjusting the total number of points drawn in the sample as well as applying multiple other bias weighting factors. Finally we will look further into potential methods for generating the bias weightings from the initial distribution of presence points.   
+  
+## Comparison of model Predictions
+  
+  Trained models were applied across the entire continent of Africa and predicted species distributions were generated for each correction method (Fig ). These distributions were subsequently compared in geographic space in a pairwise fashion using Schoener's D (Schoener 1968, Warren 2008) a simple and well used ecological metric for determining the difference in probability of presence of two different species across a landscape (or series of niches). In this case we will be using the multiple different data-processing types in the place of individual species. Schoener's D ranges from 0 (no overlap) to 1 (completely identical probability predictions). 
+  
+![Table 1. Previous reports on data thinning](/home/pbmpb13/Documents/culex-SDM/project-docs/data_thinning.png)
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+#load("C:/Users/Robert/OneDrive/Documents/Robbie/8910ENM/mosq-data/culex-v4.RData")
+require(spThin)
+require(dismo)
+require(rgdal)
+#knitr::opts_chunk$set(fig.path='figures/', cache=TRUE)
+```
+
+# Results
+
+```{r, echo=F, eval=F, message=FALSE}
+pop<-raster('C:/Users/Robert/OneDrive/Documents/Robbie/8910ENM/Project/afdens00/afds00g/w001001.adf')
+
+afr.pip<-pipiens.coords[which(pipiens.coords[,1]>-35&pipiens.coords[,1]<38&pipiens.coords[,2]>-20&pipiens.coords[,2]<50),]
+plot(wrld_simpl)
+points(afr.pip, col='red')
+
+afr.pip.unique<-unique(afr.pip)
+plot(africa.lines)
+points(afr.pip.unique)
+
+afr.pip.unique<-data.frame(afr.pip.unique)
+
+unique.x<-extract(environmental.data.rs, afr.pip.unique)
+unique.x<-unique.x[complete.cases(unique.x),]
+
+SPEC<-rep(1,nrow(afr.pip.unique))
+thinned<-thin(cbind(afr.pip.unique,SPEC), lat.col="X1", long.col="X2", spec.col='SPEC', thin.par=10, reps=100, locs.thinned.list.return = T, write.files = F, verbose=T)
+
+thinned100<-thin(cbind(afr.pip.unique,SPEC), lat.col="X1", long.col="X2", spec.col='SPEC', thin.par=100, reps=100, locs.thinned.list.return = T, write.files = F, verbose=T)
+
+thinned500<-thin(cbind(afr.pip.unique,SPEC), lat.col="X1", long.col="X2", spec.col='SPEC', thin.par=500, reps=100, locs.thinned.list.return = T, write.files = F, verbose=T)
+
+pip.pop<-extract(pop, afr.pip.unique)
+
+pip.pop<-(pip.pop+1)/max(pip.pop)
+
+pip.resample<-sample(x=1:nrow(afr.pip.unique),size=nrow(afr.pip.unique),replace=T, prob=(1/(pip.pop)))
+
+resample.points<-afr.pip.unique[pip.resample,]
+
+resample.x<-extract(environmental.data.rs, resample.points)
+resample.x<-resample.x[complete.cases(resample.x),]
+
+#plot(africa.lines)
+#plot(wrld_simpl)
+#points(thinned[[3]][,2],thinned[[3]][,1], col="red")
+nrow(thinned[[5]])
+#thinned[[2]]
+thinned.points<-cbind(thinned[[5]][,2], thinned[[5]][,1])
+thinned.x<-extract(environmental.data.rs, thinned.points)
+thinned.x<-thinned.x[complete.cases(thinned.x),]
+
+thinned.points100<-cbind(thinned100[[5]][,2], thinned100[[5]][,1])
+thinned.x100<-extract(environmental.data.rs, thinned.points100)
+thinned.x100<-thinned.x100[complete.cases(thinned.x100),]
+
+thinned.points500<-cbind(thinned500[[5]][,2], thinned500[[5]][,1])
+thinned.x500<-extract(environmental.data.rs, thinned.points500)
+thinned.x500<-thinned.x500[complete.cases(thinned.x500),]
+
+Grid.points<-gridSample(afr.pip.unique, environmental.data.rs, n=1)
+
+grid.x<-extract(environmental.data.rs, Grid.points)
+grid.x<-grid.x[complete.cases(grid.x),]
+
+res=1
+r <- raster(extent(range(afr.pip.unique[,1]), range(afr.pip.unique[,2])) + res)
+res(r) <- res
+
+Grid.points1<-gridSample(afr.pip.unique, r, n=1)
+
+grid.x1<-extract(environmental.data.rs, Grid.points1)
+grid.x1<-grid.x1[complete.cases(grid.x1),]
+
+res=5
+r <- raster(extent(range(afr.pip.unique[,1]), range(afr.pip.unique[,2])) + res)
+res(r) <- res
+
+Grid.points5<-gridSample(afr.pip.unique, r, n=1)
+
+grid.x5<-extract(environmental.data.rs, Grid.points5)
+grid.x5<-grid.x5[complete.cases(grid.x5),]
+
+###Environmental Grid
+unique.pca<-predict(pca,unique.x)
+ID <- c(1:length(unique.pca[,1]))
+unique.pca <- cbind(ID, unique.pca)
+plot(unique.pca[,2:3])
+
+#assign raster layer on top of unique pca to sample from 
+r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
+res(r)<-(.1) #size of grid squares
+cell<-cellFromXY(r, unique.pca[,2:3])
+dup<-duplicated(cell)
+data.thin<- unique.pca[!dup,]
+plot(data.thin[,2:3])
+#coordinate in geographic space
+pca.coords <- afr.pip.unique[data.thin[,1],] #coordinates of pca points 
+pca.env<-extract(environmental.data.rs, pca.coords) #how is this right?? len(afr.pip.unique)=430 but unique.x was only 402, so how do they match up?
+
+##Distance bassed environmental
+filterByProximity <- function(xy, dist, mapUnits = F) {
+  #xy can be either a SpatialPoints or SPDF object, or a matrix
+  #dist is in km if mapUnits=F, in mapUnits otherwise
+  if (!mapUnits) {
+    d <- spDists(xy,longlat=F)
+  }
+  if (mapUnits) {
+    d <- spDists(xy[,2:3],longlat=F)
+  }
+  diag(d) <- NA
+  close <- (d <= dist)
+  diag(close) <- NA
+  closePts <- which(close,arr.ind=T)
+  discard <- matrix(nrow=2,ncol=2)
+  if (nrow(closePts) > 0) {
+    while (nrow(closePts) > 0) {
+      if ((!paste(closePts[1,1],closePts[1,2],sep='_') %in% paste(discard[,1],discard[,2],sep='_')) & (!paste(closePts[1,2],closePts[1,1],sep='_') %in% paste(discard[,1],discard[,2],sep='_'))) {
+        discard <- rbind(discard, closePts[1,])
+        closePts <- closePts[-union(which(closePts[,1] == closePts[1,1]), which(closePts[,2] == closePts[1,1])),]
+      }
+    }
+    discard <- discard[complete.cases(discard),]
+    return(xy[-discard[,1],])
+  }
+  if (nrow(closePts) == 0) {
+    return(xy)
+  }
+}
+
+library(rgeos)
+library(sp)
+pts <- unique.pca[,2:3]
+pts2 <- filterByProximity(pts,dist=.1, mapUnits=F)
+
+plot(pts)
+axis(1)
+axis(2)
+#apply(as.data.frame(pts),1,function(x) plot(gBuffer(SpatialPoints(coords=matrix(c(x[1],x[2]),nrow=1)),width=2),add=T))
+par(new=T)
+plot(pts2,add=T,col='blue',pch=20,cex=2)
+
+pts.ind<-unique.x[which(pts2[,1] %in% pts[,1]),]
+
+```
+
+
+
+```{r, eval=F, echo=F}
+MAX<-maxent(environmental.data.rs, thinned.points100)
+Max.thinned100<-predict(environmental.data.rs, MAX)
+
+plot(Max.thinned100)
+
+
+LOB<-lobag.oc(thinned.x100, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.thinned100<-rastersum/length(LOB)
+
+plot(rastermean.thinned100)
+
+
+MAX<-maxent(environmental.data.rs, thinned.points500)
+Max.thinned500<-predict(environmental.data.rs, MAX)
+
+plot(Max.thinned500)
+
+points(thinned.points500)
+
+LOB<-lobag.oc(thinned.x500, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.thinned500<-rastersum/length(LOB)
+
+plot(rastermean.thinned500)
+points(thinned.points500)
+
+
+
+
+MAX<-maxent(environmental.data.rs, Grid.points1)
+Max.grid1<-predict(environmental.data.rs, MAX)
+
+plot(Max.grid1)
+
+
+LOB<-lobag.oc(grid.x1, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.grid1<-rastersum/length(LOB)
+
+plot(rastermean.grid1)
+
+
+MAX<-maxent(environmental.data.rs, Grid.points5)
+Max.grid5<-predict(environmental.data.rs, MAX)
+
+plot(Max.grid5)
+
+
+LOB<-lobag.oc(grid.x5, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.grid5<-rastersum/length(LOB)
+
+plot(rastermean.grid5)
+```
+
+
+```{r LoBag Models, echo=F, eval=F}
+LOB<-lobag.oc(unique.x, n.votes=250)
+
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.unique<-rastersum/length(LOB)
+
+plot(rastermean.unique)
+
+MAX<-maxent(environmental.data.rs, afr.pip.unique)
+Max.unique<-predict(environmental.data.rs, MAX)
+
+##################################################
+LOB<-lobag.oc(thinned.x, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.thinned<-rastersum/length(LOB)
+
+plot(rastermean.thinned)
+
+MAX<-maxent(environmental.data.rs, thinned.points)
+Max.thinned<-predict(environmental.data.rs,MAX)
+
+
+##############################################
+LOB<-lobag.oc(grid.x, n.votes=250)
+
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.grid<-rastersum/length(LOB)
+
+MAX<-maxent(environmental.data.rs,Grid.points)
+Max.grid<-predict(environmental.data.rs, MAX)
+
+plot(rastermean.grid)
+
+###########################################
+
+LOB<-lobag.oc(resample.x, n.votes=250)
+
+rastersum<- predict(environmental.data.rs,LOB[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB[[i]])
+  
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.resample<-rastersum/length(LOB)
+
+MAX<-maxent(environmental.data.rs, resample.points)
+Max.resample<-predict(environmental.data.rs,MAX)
+
+plot(rastermean.resample)
+
+#Grid Thinned Environmental
+LOB.pca.env<-lobag.oc(pca.env, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB.pca.env[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB.pca.env[[i]])
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.pca.env<-rastersum/length(LOB)
+
+plot(rastermean.pca.env)
+
+#Lobag model for environmental distance thin
+LOB.pca.dist<-lobag.oc(pts.ind, n.votes=250)
+rastersum<- predict(environmental.data.rs,LOB.pca.dist[[1]])
+for (i in 2:250)
+{
+  rasterpredict<-predict(environmental.data.rs,LOB.pca.dist[[i]])
+  rastersum<-rastersum+rasterpredict
+}
+rastermean.pca.dist<-rastersum/length(LOB)
+
+plot(rastermean.pca.dist)
+
+
+save.image('Spatial_Thinning')
+
+```
+
+
+## Results
+
+## Predicted niches
+
+### Predicted distribution based on unique sampling coordinates
+```{r Maps, echo=FALSE}
+
+load('Spatial_Thinning')
+par(mfrow=c(1,2))
+plot(rastermean.unique)
+plot(africa.lines2)
+points(afr.pip.unique, cex=.5, col='red', pch=20)
+
+
+```
+
+A LOBAG-OC model trained on all unique African presence records produces an extremely limited predicted distribution. The predicted distribution seems heavily influenced by the spatial differences in density of known occurrences. It is likely that this spatial bias is due, at least in part, to spatial bias in human sampling of mosquitoes. Therefore, as discussed above, our goal is to produce a model free from the influence of this sampling bias.
+
+### Predicted distribution for spatially filtered methods
+```{r, echo=FALSE}
+
+load('Spatial_Thinning')
+par(mfrow=c(1,2))
+plot(rastermean.thinned, main="Distance Thinning")
+plot(rastermean.grid, main="Grid Thinning")
+```
+
+When presence points are spatially thinned the predicted distribution expands substantially. Distance thinning at 10km and Grid thinning at the spatial resolution of the environmental data (.16 degrees) produce remarkably similar predicted distributions. 
+
+### Predicted distribution for environmentally filtered methods
+```{r, echo=FALSE}
+
+load('Spatial_Thinning')
+par(mfrow=c(1,2))
+plot(rastermean.pca.dist, main= "Distance Thinning")
+plot(rastermean.pca.env, main="Grid Thinning")
+```
+
+Our example of environmental distance thinning provides a substantially more limited predicted distribution than the grid-thinning example. Our resolution for environmental thinning is in PCA space, therefore our thinning units are somewhat arbitrary. As a result further investigation of the effects of thinning resolution on model outputs will be necessary. Particularly we hope to determine if resolution tuning can produce very similar predicted distributions from the two data-processing methods as can be seen in the geographic thinning example.
+
+
+### Predicted distribution method of re-sampling
+```{r, echo=FALSE}
+plot(rastermean.resample)
+```
+
+The trial counter-bias resampling method clearly did not perform as hoped. This is likely because when sampling with replacement it will be necessary to "tune" the method by setting the number of records to sample. This figure represents resampling a number of points equal to the initial number which seems to functionally increase the spatial bias of the distribution rather than reducing it.
+
+
+### Comparison of predicted niche overlaps 
+```{r Method comparison, echo=FALSE}
+library(knitr)
+
+rasters<-list(rastermean.unique,rastermean.thinned,rastermean.grid,rastermean.pca.dist, rastermean.pca.env) 
+
+Overlap<-matrix(NA, nrow=length(rasters), ncol=length(rasters))
+
+for (i in 1:length(rasters)) for (j in 1:length(rasters)) Overlap[i,j]<-nicheOverlap(rasters[[i]], rasters[[j]], stat='D')
+
+rownames(Overlap)<-c('No Thinning', 'Geographic Distance', 'Geographic Grid', 'Environmental Distance', 'Environmental Grid')
+
+colnames(Overlap)<-c('No Thinning', 'Geographic Distance', 'Geographic Grid', 'Environmental Distance', 'Environmental Grid')
+
+
+Overlap<-data.frame(Overlap)
+
+
+lower<-round(Overlap,3)
+lower[upper.tri(Overlap)]<-""
+lower<-as.data.frame(lower)
+
+kable(lower, digits=rep(3,ncol(lower)))
+
+```
+
+This table reinforces the conclusions drawn above from visual inspection. All of our thinning methods are more similar to each other than they are to the no thinning case. Notably Environmental Grid thinning (at .1 resolution) appears remarkably similar to both methods of geographic thinning (10km, 0.16 degree resolution). Further work will attempt to analyze how and why these distributions differ. 
+
+### Spatial distance-based thinning at multiple resolutions
+```{r, echo=F, fig.height=3.5}
+par(mfrow=c(1,3))
+plot(rastermean.thinned, main="10km")
+plot(rastermean.thinned100, main="100km")
+plot(rastermean.thinned500, main="500km")
+```
+
+
+### Schoener's D comparison of model outputs across resolutions
+```{r Distance based Thinning Scale Comparison, echo=FALSE, fig.width=5}
+rasters<-list(rastermean.thinned, rastermean.thinned100, rastermean.thinned500)
+
+Overlap<-matrix(NA, nrow=length(rasters), ncol=length(rasters))
+
+for (i in 1:length(rasters)) for (j in 1:length(rasters)) Overlap[i,j]<-nicheOverlap(rasters[[i]], rasters[[j]], stat='D')
+
+rownames(Overlap)<-c('10km', '100km', '500km')
+
+colnames(Overlap)<-c('10km', '100km', '500km')
+
+Overlap<-data.frame(Overlap)
+
+
+lower<-round(Overlap, 3)
+lower[upper.tri(Overlap)]<-""
+lower<-as.data.frame(lower)
+colnames(lower)<-c('10km', '100km', '500km')
+
+kable(lower, digits=c(3,3,3))
+```
+
+### Spatial grid based thinning at multiple resolutions
+```{r, echo=F, fig.height=4}
+par(mfrow=c(1,3))
+plot(rastermean.grid, main="0.16 Degrees")
+plot(rastermean.grid1, main="1 Degree")
+plot(rastermean.grid5, main="5 Degrees")
+```
+
+
+### Schoener's D comparison of model outputs across resolutions
+```{r Grid based Thinning Scale Comparison, echo=FALSE}
+rasters<-list(rastermean.grid, rastermean.grid1, rastermean.grid5)
+
+Overlap<-matrix(NA, nrow=length(rasters), ncol=length(rasters))
+
+for (i in 1:length(rasters)) for (j in 1:length(rasters)) Overlap[i,j]<-nicheOverlap(rasters[[i]], rasters[[j]], stat='D')
+
+rownames(Overlap)<-c('0.16 Degrees', '1 Degree', '5 Degrees')
+
+colnames(Overlap)<-c('0.16 Degrees', '1 Degree', '5 Degrees')
+
+Overlap<-data.frame(Overlap)
+
+
+lower<-round(Overlap, 3)
+lower[upper.tri(Overlap)]<-""
+lower<-as.data.frame(lower)
+colnames(lower)<-c('0.16 Degrees', '1 Degree', '5 Degrees')
+
+kable(lower, digits=c(3,3,3))
+```
+
+These preliminary analyses of the effect of resolution on spatial thinning clearly demonstrate an effect of resolution of thining on predicted model. Under visual inspection decreased resolution (larger distances) seems to expand the total non-zero area of the predicted distribution but decrease the likelihood of presence at the heights of the distribution. Further analysis is required to better understand the relationship between resolution of thinning and model output. 
+
+#Discussion
+
+Our analysis shows that environmental and spatial filtering can produce very similar predicted distributions. This may help to address the ongoing debate about the preferred method of data thinning for Species Distribution Modeling. It seems likely that the identity of the superior method is context dependent given that in the scenario considered in the present study their results are nearly indistinguishable. 
+  For the remainder of this project we plan to further consider the effects of resolution of thinning on model output as well as further develop a weight based data-processing approach for the presence-only method LOBAG-OC. Finally we are in the process of developing a viable dataset (either simulated or real) upon which we can impose spatial bias in order to thorouhgly compare performance of our methods via AUC. 
+
+# References
