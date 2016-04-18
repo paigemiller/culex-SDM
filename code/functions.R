@@ -235,3 +235,35 @@ predictSvm <- function(p, a=NULL, model){
   }
   return(list(p.out = predicts.presence/n.votes, a.out = predicts.absence/n.votes))
 }
+
+
+##Distance bassed environmental
+filterByProximity <- function(xy, dist, mapUnits = F) {
+  #xy can be either a SpatialPoints or SPDF object, or a matrix
+  #dist is in km if mapUnits=F, in mapUnits otherwise
+  if (!mapUnits) {
+    d <- spDists(xy,longlat=F)
+  }
+  if (mapUnits) {
+    d <- spDists(xy[,2:3],longlat=F)
+  }
+  diag(d) <- NA
+  close <- (d <= dist)
+  diag(close) <- NA
+  closePts <- which(close,arr.ind=T)
+  discard <- matrix(nrow=2,ncol=2)
+  if (nrow(closePts) > 0) {
+    while (nrow(closePts) > 0) {
+      if ((!paste(closePts[1,1],closePts[1,2],sep='_') %in% paste(discard[,1],discard[,2],sep='_')) & (!paste(closePts[1,2],closePts[1,1],sep='_') %in% paste(discard[,1],discard[,2],sep='_'))) {
+        discard <- rbind(discard, closePts[1,])
+        closePts <- closePts[-union(which(closePts[,1] == closePts[1,1]), which(closePts[,2] == closePts[1,1])),]
+      }
+    }
+    discard <- discard[complete.cases(discard),]
+    return(xy[-discard[,1],])
+  }
+  if (nrow(closePts) == 0) {
+    return(xy)
+  }
+}
+

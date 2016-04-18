@@ -1,8 +1,14 @@
 ---
 title: "Methods of limiting spatial sampling bias in species distribution modeling: _Culex pipiens_, a case study"
 author: "Robert Richards, Paige Miller, Gio Righi"
-date: "March 25, 2016"
-output: pdf_document
+output:
+  pdf_document:
+    toc: true
+  html_document:
+    fig_height: 6
+    fig_width: 6
+    highlight: tango
+    theme: journal
 ---
 # Introduction
 
@@ -59,12 +65,14 @@ Ecologists, managers, and public health officials use species distribution model
 require(spThin)
 require(dismo)
 require(rgdal)
-#knitr::opts_chunk$set(fig.path='figures/', cache=TRUE)
+library(rgeos)
+library(sp)
+knitr::opts_chunk$set(fig.path='figures/', cache=TRUE)
 ```
 
 # Results
 
-```{r, echo=F, eval=F, message=FALSE}
+```{r pipiens, echo=F, eval=F, message=FALSE}
 pop<-raster('C:/Users/Robert/OneDrive/Documents/Robbie/8910ENM/Project/afdens00/afds00g/w001001.adf')
 
 afr.pip<-pipiens.coords[which(pipiens.coords[,1]>-35&pipiens.coords[,1]<38&pipiens.coords[,2]>-20&pipiens.coords[,2]<50),]
@@ -155,38 +163,6 @@ plot(data.thin[,2:3])
 pca.coords <- afr.pip.unique[data.thin[,1],] #coordinates of pca points 
 pca.env<-extract(environmental.data.rs, pca.coords) #how is this right?? len(afr.pip.unique)=430 but unique.x was only 402, so how do they match up?
 
-##Distance bassed environmental
-filterByProximity <- function(xy, dist, mapUnits = F) {
-  #xy can be either a SpatialPoints or SPDF object, or a matrix
-  #dist is in km if mapUnits=F, in mapUnits otherwise
-  if (!mapUnits) {
-    d <- spDists(xy,longlat=F)
-  }
-  if (mapUnits) {
-    d <- spDists(xy[,2:3],longlat=F)
-  }
-  diag(d) <- NA
-  close <- (d <= dist)
-  diag(close) <- NA
-  closePts <- which(close,arr.ind=T)
-  discard <- matrix(nrow=2,ncol=2)
-  if (nrow(closePts) > 0) {
-    while (nrow(closePts) > 0) {
-      if ((!paste(closePts[1,1],closePts[1,2],sep='_') %in% paste(discard[,1],discard[,2],sep='_')) & (!paste(closePts[1,2],closePts[1,1],sep='_') %in% paste(discard[,1],discard[,2],sep='_'))) {
-        discard <- rbind(discard, closePts[1,])
-        closePts <- closePts[-union(which(closePts[,1] == closePts[1,1]), which(closePts[,2] == closePts[1,1])),]
-      }
-    }
-    discard <- discard[complete.cases(discard),]
-    return(xy[-discard[,1],])
-  }
-  if (nrow(closePts) == 0) {
-    return(xy)
-  }
-}
-
-library(rgeos)
-library(sp)
 pts <- unique.pca[,2:3]
 pts2 <- filterByProximity(pts,dist=.1, mapUnits=F)
 
@@ -198,10 +174,7 @@ par(new=T)
 plot(pts2,add=T,col='blue',pch=20,cex=2)
 
 pts.ind<-unique.x[which(pts2[,1] %in% pts[,1]),]
-
 ```
-
-
 
 ```{r, eval=F, echo=F}
 MAX<-maxent(environmental.data.rs, thinned.points100)
@@ -243,14 +216,10 @@ rastermean.thinned500<-rastersum/length(LOB)
 plot(rastermean.thinned500)
 points(thinned.points500)
 
-
-
-
 MAX<-maxent(environmental.data.rs, Grid.points1)
 Max.grid1<-predict(environmental.data.rs, MAX)
 
 plot(Max.grid1)
-
 
 LOB<-lobag.oc(grid.x1, n.votes=250)
 rastersum<- predict(environmental.data.rs,LOB[[1]])
@@ -383,7 +352,6 @@ save.image('Spatial_Thinning')
 
 ```
 
-
 ## Results
 
 ## Predicted niches
@@ -396,8 +364,6 @@ par(mfrow=c(1,2))
 plot(rastermean.unique)
 plot(africa.lines2)
 points(afr.pip.unique, cex=.5, col='red', pch=20)
-
-
 ```
 
 A LOBAG-OC model trained on all unique African presence records produces an extremely limited predicted distribution. The predicted distribution seems heavily influenced by the spatial differences in density of known occurrences. It is likely that this spatial bias is due, at least in part, to spatial bias in human sampling of mosquitoes. Therefore, as discussed above, our goal is to produce a model free from the influence of this sampling bias.
@@ -447,16 +413,13 @@ rownames(Overlap)<-c('No Thinning', 'Geographic Distance', 'Geographic Grid', 'E
 
 colnames(Overlap)<-c('No Thinning', 'Geographic Distance', 'Geographic Grid', 'Environmental Distance', 'Environmental Grid')
 
-
 Overlap<-data.frame(Overlap)
-
 
 lower<-round(Overlap,3)
 lower[upper.tri(Overlap)]<-""
 lower<-as.data.frame(lower)
 
 kable(lower, digits=rep(3,ncol(lower)))
-
 ```
 
 This table reinforces the conclusions drawn above from visual inspection. All of our thinning methods are more similar to each other than they are to the no thinning case. Notably Environmental Grid thinning (at .1 resolution) appears remarkably similar to both methods of geographic thinning (10km, 0.16 degree resolution). Further work will attempt to analyze how and why these distributions differ. 
@@ -483,7 +446,6 @@ rownames(Overlap)<-c('10km', '100km', '500km')
 colnames(Overlap)<-c('10km', '100km', '500km')
 
 Overlap<-data.frame(Overlap)
-
 
 lower<-round(Overlap, 3)
 lower[upper.tri(Overlap)]<-""
@@ -515,7 +477,6 @@ rownames(Overlap)<-c('0.16 Degrees', '1 Degree', '5 Degrees')
 colnames(Overlap)<-c('0.16 Degrees', '1 Degree', '5 Degrees')
 
 Overlap<-data.frame(Overlap)
-
 
 lower<-round(Overlap, 3)
 lower[upper.tri(Overlap)]<-""
