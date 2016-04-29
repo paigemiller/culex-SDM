@@ -1,7 +1,7 @@
 ############################code for environmental distance thinning########################
 #rm(list = ls()) #run before parallel code
 source('functions.R') #filterByProximity function & others
-load("culex-v4.RData")
+load("culex-v3.RData")
 
 ##Ripley's L of PCA space
 pca.ppp <- as.ppp(pca$x[,1:2], c(-20,20,-20,20)) #rejects 68 points... why? 
@@ -51,7 +51,7 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
   
   ## Pick the smallest distance to a chosen point for each of the training points
   speDist <- list()
-  for (i in 1:nspp){
+  for (i in 1:1){
     speDist[[i]] <- cbind(Dist1[[i]], Dist2[[i]], Dist3[[i]])
   }
   DistMin <- lapply(speDist, FUN=function(x){apply(x, 1, min)})
@@ -59,15 +59,15 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
   ##sample from the training points randomly and according to the minimum distance to a chosen point, get environmental variables at those points
   set.seed(345)
   Rand <- lapply(DistMin, FUN=function(x){sample(1:length(x), size=round(nPts/4), replace=F)})
-  Samp <- lapply(DistMin, FUN=function(x){sample(1:length(x), size=round(nPts/4), replace=F, prob=1/((x)^30))})
+  Samp <- lapply(DistMin, FUN=function(x){sample(1:length(x), size=round(nPts/4), replace=F, prob=1/((x+1)^3))})
   RandPts <- list(); SampPts <- list() 
-  for (i in 1:nspp){
+  for (i in 1:1){
     RandPts[[i]] <- sampTrain[[i]][Rand[[i]], ]
     SampPts[[i]] <- sampTrain[[i]][Samp[[i]], ]
   }
   RandX <- list() ; SampX <- list()
   #environmental data
-  for (i in 1:nspp){
+  for (i in 1:1){
     RandX[[i]] <- train.x[[i]][Rand[[i]], ] #environmental data at random points
     SampX[[i]] <- test.x[[i]][Samp[[i]], ] #environmental data at biased sample points
   }
@@ -77,7 +77,7 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
   ThinX <- list() ; envD <- list()
   for (i in 1:length(d)){
     thin <- lapply(uniquePCA, FUN=function(x){filterByProximity(x[,2:3], dist=d[i])}) #list of length(d) where each list item is of lenght nspp
-    for (j in 1:nspp){
+    for (j in 1:1){
       env <- uniquePCA[[j]][,2:3]
       envD[[j]] <- SampX[[j]][which(env[,1] %in% thin[[j]][[1]][,1]),] #environmental data for each species j at distance D
     }
@@ -91,7 +91,7 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
   LOB.THIN <- list() ; dat <- list()
   for (i in 1:length(d)){
     dist <- ThinX[[i]]
-    for (j in 1:nspp){
+    for (j in 1:1){
       dat[[j]]<-lobag.oc(dist[[j]], n.votes=250)
     }
     LOB.THIN[[i]] <- dat
@@ -100,7 +100,7 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
 
   ##get vals for all the models
   AUC.LOB.FULL<- list(); AUC.LOB.RAND <- list(); AUC.LOB.BIAS <- list()
-  for (i in 1:nspp){
+  for (i in 1:1){
     LOB <- predictSvm(model=LOB.FULL[[i]],test.x[[i]]) #list of predictions
     pred <- ROCR::prediction(LOB$p.out, sampTest[[i]][,3]) #list of prediction items 
     AUC.LOB.FULL[[i]] <- unlist(ROCR::performance(pred, "auc")@y.values) 
@@ -114,30 +114,34 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
     AUC.LOB.BIAS[[i]] <- unlist(ROCR::performance(pred, "auc")@y.values) #list of AUC values
   }
   #AUC vals for env dist thinning
-  dat <- list() ; LOB <- list() ; AUC.LOB.THIN <- list()
+  dat <- list() ; LOB <- matrix(NA, nrow=2000, ncol=length(d)) ; AUC.LOB.THIN <- list()
   for (i in 1:length(d)){
     modD <- LOB.THIN[[i]]
-    for (j in 1:nspp){
+    for(j in 1:1)
+    {
       spp <- modD[[j]]
-      LOB[[j]] <- predictSvm(model=spp, test.x[[j]])
-      pred <- ROCR::prediction(LOB[[j]]$p.out, sampTest[[j]][,3]) #list of prediction items 
+      LOB[,i] <- predictSvm(model=spp, test.x[[j]])$p.out
+      pred <- ROCR::prediction(LOB[,i], sampTest[[j]][,3]) #list of prediction items 
       dat[[j]] <- unlist(ROCR::performance(pred, "auc")@y.values) #list of AUC values
+      
     }
     AUC.LOB.THIN[[i]] <- dat
   }
-  return(list(AUC.LOB.FULL, AUC.LOB.RAND, AUC.LOB.BIAS, AUC.LOB.THIN))
+  LOBMEAN<-apply(LOB, MARGIN=1, FUN=mean)
+  pred<-ROCR::prediction(LOBMEAN, sampTest[[1]][,3])
+  AUC.LOB.MEAN<-unlist(ROCR::performance(pred, "auc")@y.values)
+  return(list(unlist(AUC.LOB.FULL), unlist(AUC.LOB.RAND), unlist(AUC.LOB.BIAS), unlist(AUC.LOB.THIN), unlist(AUC.LOB.MEAN)))
 }
 
 ##parallel code
 
-cluster <- makeCluster(2, type="SOCK") # Creates a set of n reps of R running in parallel and communicating over sockets
+cluster <- makeCluster(10, type="SOCK") # Creates a set of n reps of R running in parallel and communicating over sockets
 # load required libraries on all cluster nodes
 clusterEvalQ(cluster, library(virtualspecies))
 clusterEvalQ(cluster, library(dismo))
 clusterEvalQ(cluster, library(ROCR))
 clusterEvalQ(cluster, library(spThin))
 clusterEvalQ(cluster, library(sp))
-clusterEvalQ(cluster, library(virtualspecies))
 clusterEvalQ(cluster, source('functions.R'))
 clusterExport(cluster, c("environmental.data.rs"))
 clusterExport(cluster, c("pca"))
@@ -150,14 +154,14 @@ N=10 #number of species
 distances <- seq(.2, 5, by=.25)
 
 start <- proc.time() #begins elapsed time of the simulation
-envThinDat <- snow::clusterApplyLB(cluster, fun=getAnswers, 1:10, d=distances, pca=pca) # disperse individuals and spread the disease 
+envThinDat100 <- snow::clusterApplyLB(cluster, fun=getAnswers, 1:100, d=distances, pca=pca) # disperse individuals and spread the disease 
 stopt <- proc.time() #ends elapsed time of the simulation
 elapsed <- stopt - start
 print(elapsed) #prints elapsed time to console
 stopCluster(cluster) # terminate cluster
 
 ##parameters for thinning
-N=10 #number of species
+#N=10 #number of species
 distances <- seq(.2, 5, by=.25)
 
 start <- proc.time() #begins elapsed time of the simulation
