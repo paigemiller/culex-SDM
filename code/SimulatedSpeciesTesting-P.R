@@ -165,9 +165,19 @@ save("envThinDat", file="thinningData.RData")
 
 ##heatplot
 library(lattice)
+library(rasterVis)
 thinMat <- matrix(unlist(envThinDat), nrow=24)
 rownames(thinMat) <- c("AUC.FULL", "AUC.RAND", "AUC.BIAS", c(paste0("AUC.THIN.", distances)), "AUC.MEAN")
 colnames(thinMat) <- c(paste0("Species ", seq(1,10)))
 
-level.p
+levelplot(thinMat)
+levelplot(thinMat, par.settings=RdBuTheme(), scales=list(x=list(rot=70)), ylab="", xlab="")
+
+
+###calculate delta AUC according to Fourcade et al. 
+meanThinning<-thinMat[24,]
+ 
+DAUC<-(meanThinning - thinMat[4:23, ]) / (thinMat[1,] - thinMat[3,])
+
+levelplot(DAUC, par.settings=RdBuTheme(), scales=list(x=list(rot=70)), ylab="", xlab="")
 
