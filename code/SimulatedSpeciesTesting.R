@@ -41,7 +41,7 @@ filterByProximity <- function (rec.df.orig, dist, reps=1) #df of x-y, thinning d
 
 time1<-system.time({cl <- makeCluster(2) ;registerDoParallel(cl)
 
-AUC<-foreach (k=1:N, .combine=rbind,.packages=c('virtualspecies', 'dismo','ROCR', 'spThin', 'doParallel', 'rgeos','sp')) %dopar% {
+AUC<-foreach (k=1:40, .combine=rbind,.packages=c('virtualspecies', 'dismo','ROCR', 'spThin', 'doParallel', 'rgeos','sp')) %dopar% {
   
 set.seed(k)
 sp<-generateRandomSp(environmental.data.rs, approach="pca") #generates a species with a random relationship to the two pca axes
@@ -307,21 +307,21 @@ ID <- c(1:length(unique.pca[,1]))
 unique.pca <- cbind(ID, unique.pca)
 plot(unique.pca[,2:3])
 
-#assign raster layer on top of unique pca to sample from
-r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
-res(r)<-(.25) #size of grid squares
-cell<-cellFromXY(r, unique.pca[,2:3])
-dup<-duplicated(cell)
-data.thin<- unique.pca[!dup,]
-plot(data.thin[,2:3])
-#coordinate in geographic space
-pca.coords <- SamplePoints[data.thin[,1],] #coordinates of pca points 
-pca.env<-extract(environmental.data.rs, pca.coords) #how is this right?? len(afr.pip.unique)=430 but unique.x was only 402, so how do they match up?
-
-LOB<-lobag.oc(pca.env, n.votes=250)
-LOB.full<-predictSvm(LOB,test.x)
-pred<-prediction(LOB.full$p.out,sample.test[,3])
-AUC.LOB.pca.grid.25<-performance(pred, "auc")@y.values
+# #assign raster layer on top of unique pca to sample from
+# r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
+# res(r)<-(.25) #size of grid squares
+# cell<-cellFromXY(r, unique.pca[,2:3])
+# dup<-duplicated(cell)
+# data.thin<- unique.pca[!dup,]
+# plot(data.thin[,2:3])
+# #coordinate in geographic space
+# pca.coords <- SamplePoints[data.thin[,1],] #coordinates of pca points 
+# pca.env<-extract(environmental.data.rs, pca.coords) #how is this right?? len(afr.pip.unique)=430 but unique.x was only 402, so how do they match up?
+# 
+# LOB<-lobag.oc(pca.env, n.votes=250)
+# LOB.full<-predictSvm(LOB,test.x)
+# pred<-prediction(LOB.full$p.out,sample.test[,3])
+# AUC.LOB.pca.grid.25<-performance(pred, "auc")@y.values
 
 r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
 res(r)<-(.5) #size of grid squares
@@ -338,20 +338,20 @@ LOB.full<-predictSvm(LOB,test.x)
 pred<-prediction(LOB.full$p.out,sample.test[,3])
 AUC.LOB.pca.grid.5<-performance(pred, "auc")@y.values
 
-r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
-res(r)<-(.75) #size of grid squares
-cell<-cellFromXY(r, unique.pca[,2:3])
-dup<-duplicated(cell)
-data.thin<- unique.pca[!dup,]
-plot(data.thin[,2:3])
-#coordinate in geographic space
-pca.coords <- SamplePoints[data.thin[,1],] #coordinates of pca points 
-pca.env<-extract(environmental.data.rs, pca.coords) #how is this right?? len(afr.pip.unique)=430 but unique.x was only 402, so how do they match up?
-
-LOB<-lobag.oc(pca.env, n.votes=250)
-LOB.full<-predictSvm(LOB,test.x)
-pred<-prediction(LOB.full$p.out,sample.test[,3])
-AUC.LOB.pca.grid.75<-performance(pred, "auc")@y.values
+# r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
+# res(r)<-(.75) #size of grid squares
+# cell<-cellFromXY(r, unique.pca[,2:3])
+# dup<-duplicated(cell)
+# data.thin<- unique.pca[!dup,]
+# plot(data.thin[,2:3])
+# #coordinate in geographic space
+# pca.coords <- SamplePoints[data.thin[,1],] #coordinates of pca points 
+# pca.env<-extract(environmental.data.rs, pca.coords) #how is this right?? len(afr.pip.unique)=430 but unique.x was only 402, so how do they match up?
+# 
+# LOB<-lobag.oc(pca.env, n.votes=250)
+# LOB.full<-predictSvm(LOB,test.x)
+# pred<-prediction(LOB.full$p.out,sample.test[,3])
+# AUC.LOB.pca.grid.75<-performance(pred, "auc")@y.values
 
 
 r<-raster(xmn=min(unique.pca[,2]-1), xmx=max(unique.pca[,2]+1), ymn=min(unique.pca[,3]-1), ymx=max(unique.pca[,3]+1))
@@ -391,15 +391,15 @@ AUC.LOB.pca.grid2<-performance(pred, "auc")@y.values
 
 #function for proximity filtering
 
-pts <- unique.pca[,2:3]
-pts2 <- filterByProximity(pts,dist=.25)
-pts.ind<-SampleX[which(pts[,1] %in% pts2[[1]][,1]),]
-
-
-LOB<-lobag.oc(pts.ind, n.votes=250)
-LOB.full<-predictSvm(LOB,test.x)
-pred<-prediction(LOB.full$p.out,sample.test[,3])
-AUC.LOB.pca.dist.25<-performance(pred, "auc")@y.values
+# pts <- unique.pca[,2:3]
+# pts2 <- filterByProximity(pts,dist=.25)
+# pts.ind<-SampleX[which(pts[,1] %in% pts2[[1]][,1]),]
+# 
+# 
+# LOB<-lobag.oc(pts.ind, n.votes=250)
+# LOB.full<-predictSvm(LOB,test.x)
+# pred<-prediction(LOB.full$p.out,sample.test[,3])
+# AUC.LOB.pca.dist.25<-performance(pred, "auc")@y.values
 
 pts <- unique.pca[,2:3]
 pts2 <- filterByProximity(pts,dist=.5)
@@ -411,15 +411,15 @@ LOB.full<-predictSvm(LOB,test.x)
 pred<-prediction(LOB.full$p.out,sample.test[,3])
 AUC.LOB.pca.dist.5<-performance(pred, "auc")@y.values
 
-pts <- unique.pca[,2:3]
-pts2 <- filterByProximity(pts,dist=.75)
-pts.ind<-SampleX[which(pts[,1] %in% pts2[[1]][,1]),]
-
-
-LOB<-lobag.oc(pts.ind, n.votes=250)
-LOB.full<-predictSvm(LOB,test.x)
-pred<-prediction(LOB.full$p.out,sample.test[,3])
-AUC.LOB.pca.dist.75<-performance(pred, "auc")@y.values
+# pts <- unique.pca[,2:3]
+# pts2 <- filterByProximity(pts,dist=.75)
+# pts.ind<-SampleX[which(pts[,1] %in% pts2[[1]][,1]),]
+# 
+# 
+# LOB<-lobag.oc(pts.ind, n.votes=250)
+# LOB.full<-predictSvm(LOB,test.x)
+# pred<-prediction(LOB.full$p.out,sample.test[,3])
+# AUC.LOB.pca.dist.75<-performance(pred, "auc")@y.values
 
 pts <- unique.pca[,2:3]
 pts2 <- filterByProximity(pts,dist=1)
@@ -446,16 +446,44 @@ AUC.LOB.pca.dist2<-performance(pred, "auc")@y.values
 AUCs<-cbind(as.numeric(AUC.LOB),as.numeric(AUC.LOB.RAND),as.numeric(AUC.LOB.Biased),
             as.numeric(AUC.LOB.Grid),as.numeric(AUC.LOB.Grid1),as.numeric(AUC.LOB.Grid5), 
             as.numeric(AUC.LOB.dist.16), as.numeric(AUC.LOB.dist1),as.numeric(AUC.LOB.dist5),
-            as.numeric(AUC.LOB.pca.grid.25),as.numeric(AUC.LOB.pca.grid.5),as.numeric(AUC.LOB.pca.grid.75),
-            as.numeric(AUC.LOB.pca.grid1),as.numeric(AUC.LOB.pca.grid2),as.numeric(AUC.LOB.pca.dist.25),
-            as.numeric(AUC.LOB.pca.dist.5),as.numeric(AUC.LOB.pca.dist.75),
+            as.numeric(AUC.LOB.pca.grid.5),
+            as.numeric(AUC.LOB.pca.grid1),as.numeric(AUC.LOB.pca.grid2),
+            as.numeric(AUC.LOB.pca.dist.5),
             as.numeric(AUC.LOB.pca.dist1),as.numeric(AUC.LOB.pca.dist2))
 return(AUCs)
 }})
 stopCluster(cl)
-colnames(AUC)<-c('AUC.LOB','AUC.LOB.RAND','AUC.LOB.Biased','AUC.LOB.Grid','AUC.LOB.Grid1','AUC.LOB.Grid5','AUC.LOB.dist.16','AUC.LOB.dist1','AUC.LOB.dist5', 'AUC.LOB.pca.grid.25', 'AUC.LOB.pca.grid.5','AUC.LOB.pca.grid.75','AUC.LOB.pca.grid1','AUC.LOB.pca.grid2', 'AUC.LOB.pca.dist.25','AUC.LOB.pca.dist.5','AUC.LOB.pca.dist.75','AUC.LOB.pca.dist1','AUC.LOB.pca.dist2')
+colnames(AUC)<-c('AUC.LOB','AUC.LOB.RAND','AUC.LOB.Biased','AUC.LOB.Grid','AUC.LOB.Grid1','AUC.LOB.Grid5','AUC.LOB.dist.16','AUC.LOB.dist1','AUC.LOB.dist5', 'AUC.LOB.pca.grid.5','AUC.LOB.pca.grid1','AUC.LOB.pca.grid2','AUC.LOB.pca.dist.5','AUC.LOB.pca.dist1','AUC.LOB.pca.dist2')
 
 boxplot(AUC)
+
+Dfunc<-function(x) (x[4:15]-x[3])/(x[1]-x[3])
+ DAUC<-t(apply(AUC, MARGIN=1, FUN=Dfunc))
+ 
+ BestModel<-function(x) which(x==max(x))
+ 
+ Best<-apply(DAUC, MARGIN=1, FUN=BestModel)
+ Best<-colnames(DAUC)[Best]
+ 
+ DAUCvec<-data.frame(cbind(as.numeric(as.vector(DAUC)),c(rep("Geographic", 180), rep("Environmental", 180)),c(rep("Grid", 90), rep("Distance", 90), rep("Grid", 90), rep("Distance", 90)),c(rep(".16", 30),rep('1',30),rep('5',30),rep(".16", 30),rep('1',30),rep('5',30), rep('.5',30), rep('1', 30), rep('2', 30),rep('.5',30), rep('1', 30), rep('2', 30)),c(rep(colnames(DAUC)[1],30),rep(colnames(DAUC)[2],30),rep(colnames(DAUC)[3],30),rep(colnames(DAUC)[4],30),rep(colnames(DAUC)[5],30),rep(colnames(DAUC)[6],30),rep(colnames(DAUC)[7],30),rep(colnames(DAUC)[8],30),rep(colnames(DAUC)[9],30),rep(colnames(DAUC)[10],30),rep(colnames(DAUC)[11],30),rep(colnames(DAUC)[12],30)), rep(seq(1,30),12)))
+ 
+ 
+ colnames(DAUCvec)<-c("DAUC", "Space","Type","Distance","Method", "Species")
+ 
+ ModelFull<-lm(as.numeric(DAUC)~as.factor(Space) + as.factor(Type) + as.factor(Distance), data=DAUCvec)
+ summary(ModelFull)
+ summary(aov(ModelFull))
+ 
+ tukey<-TukeyHSD(aov(ModelFull))
+ tukey$`DAUCvec[, 2]`[which(tukey$`DAUCvec[, 2]`[,4]<.05),1]
+
+ summary(aov(as.numeric(DAUCvec[,1])~DAUCvec[,2]+DAUCvec[,3]))
+ tukey<-TukeyHSD(aov(as.numeric(DAUCvec[,1])~DAUCvec[,2]))
+ tukey$`DAUCvec[, 2]`[which(tukey$`DAUCvec[, 2]`[,4]<.05),1]
+ summary(lm(as.numeric(DAUCvec[,1])~DAUCvec[,2]+DAUCvec[,3]))
+ 
+ levelplot(DAUC, xlab="Species")
+
 meanAUC<-apply(AUC, MARGIN=2, FUN=mean)
 
 #AUCs<-data.frame(cbind(as.numeric(AUC.LOB),as.numeric(AUC.LOB.RAND),as.numeric(AUC.LOB.Biased),as.numeric(AUC.LOB.Grid),as.numeric(AUC.LOB.Grid1),as.numeric(AUC.LOB.Grid5), as.numeric(AUC.LOB.pca.grid.25),as.numeric(AUC.LOB.pca.grid.5),as.numeric(AUC.LOB.pca.grid.75),as.numeric(AUC.LOB.pca.grid1),as.numeric(AUC.LOB.pca.grid2)))
@@ -466,7 +494,9 @@ meanAUC<-apply(AUC, MARGIN=2, FUN=mean)
 #meanAUCs<-apply(AUCs, MARGIN=2, FUN=mean)
 
 ###calculate delta AUC according to Fourcade et al. 
-DAUC<-meanAUC[4:19]
+DAUCmean<-colMeans(DAUC)
 
-DAUC<-(DAUC-meanAUCs[3])/(meanAUCs[1]-meanAUCs[3])
-DAUC
+DAUCmean2<-(meanAUC[4:15]-meanAUC[3])/(meanAUC[1]-meanAUC[3])
+boxplot(DAUC)
+
+save.image("SimulatedSpeciesTesting")
