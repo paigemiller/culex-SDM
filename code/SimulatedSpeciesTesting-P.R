@@ -166,18 +166,17 @@ save("envThinDat", file="thinningData.RData")
 ##heatplot
 library(lattice)
 library(rasterVis)
-thinMat <- matrix(unlist(envThinDat), nrow=24)
-rownames(thinMat) <- c("AUC.FULL", "AUC.RAND", "AUC.BIAS", c(paste0("AUC.THIN.", distances)), "AUC.MEAN")
-colnames(thinMat) <- c(paste0("Species ", seq(1,10)))
+thinMat <- matrix(unlist(envThinDat), nrow=10)
+colnames(thinMat) <- c("AUC.FULL", "AUC.RAND", "AUC.BIAS", c(paste0("AUC.THIN.", distances)), "AUC.MEAN")
+rownames(thinMat) <- c(paste0("Species ", seq(1,10)))
 
 levelplot(thinMat)
-levelplot(thinMat, par.settings=RdBuTheme(), scales=list(x=list(rot=70)), ylab="", xlab="")
+levelplot(thinMat, par.settings=RdBuTheme(), scales=list(x=list(rot=70)), ylab="", xlab="", main="AUCs for Environmental Thinning")
 
 
 ###calculate delta AUC according to Fourcade et al. 
 meanThinning<-thinMat[24,]
  
-DAUC<-(meanThinning - thinMat[4:23, ]) / (thinMat[1,] - thinMat[3,])
+DAUC<-(thinMat[,4:24 ]-thinMat[,3]) / (thinMat[,1] - thinMat[,3])
 
-levelplot(DAUC, par.settings=RdBuTheme(), scales=list(x=list(rot=70)), ylab="", xlab="")
-
+levelplot(DAUC, at=unique(c(seq(-5,0, length=100), seq(0,5, length=100))), col.regions=colorRampPalette(c("red", "white", "green")), scales=list(x=list(rot=70)), ylab="", xlab="")

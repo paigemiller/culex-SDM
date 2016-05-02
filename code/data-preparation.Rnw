@@ -43,12 +43,12 @@ The goal of this study is to produce ecological niche models and maps of the pot
 \begin{enumerate}
   \item What is the right geographic scope of this study (Africa? Global?)
   \item If new data are acquired, should it be obtained at higher resolution?
-  \item Should maps be projected in equal area format? (not relevant to data sampling, but possibly relevant to data thinning)
+  \item Should maps be projected in equal area format? (not relevant to data sampling, but possibly relevant to data ning)
   \item Are projections for future climate desired?
   \item Are there relevant land use data that might be used as predictor variables?
 \end{enumerate}
 
-In addition, because of the aggregation of \textit{Culex} records, this study might provide a good opportunity to showcase the plug-and-play models. In this case, it may be desirable to compare thinned data (which are less susceptible to sampling heterogeneity, but fewer in number) and non-thinned data (which are expected to be more susceptible to sampling heterogeneity, here counteracted by the plug-and-play method). This study may be a good occasion to introduce the concept of ``data calibration''.
+In addition, because of the aggregation of \textit{Culex} records, this study might provide a good opportunity to showcase the plug-and-play models. In this case, it may be desirable to compare ned data (which are less susceptible to sampling heterogeneity, but fewer in number) and non-ned data (which are expected to be more susceptible to sampling heterogeneity, here counteracted by the plug-and-play method). This study may be a good occasion to introduce the concept of ``data calibration''.
 
 
   
