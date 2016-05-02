@@ -2,6 +2,7 @@
 #rm(list = ls()) #run before parallel code
 source('functions.R') #filterByProximity function & others
 load("culex-v3.RData")
+library('snow')
 
 ##Ripley's L of PCA space
 pca.ppp <- as.ppp(pca$x[,1:2], c(-20,20,-20,20)) #rejects 68 points... why? 
@@ -23,10 +24,10 @@ getAnswers <- function(index, d, pca){ #function to gen spp, thin data, run mode
   nPts <- 2000 #number of sample points
   #d <- distances
   
-  nspp=index
+  nspp=index 
   
   ##generates nspp
-  set.seed(index)
+  set.seed(index * 123)
   spList <- as.list(seq(1))###,nspp))
   sp <- lapply(X=spList, FUN=generateRandomSp, raster.stack=environmental.data.rs, approach="pca", plot=FALSE) #doesn't account for random seeds... is that bad
   
@@ -154,26 +155,19 @@ N=10 #number of species
 distances <- seq(.2, 5, by=.25)
 
 start <- proc.time() #begins elapsed time of the simulation
-envThinDat100 <- snow::clusterApplyLB(cluster, fun=getAnswers, 1:100, d=distances, pca=pca) # disperse individuals and spread the disease 
+envThinDat <- snow::clusterApplyLB(cluster, fun=getAnswers, 1:10, d=distances, pca=pca) # disperse individuals and spread the disease 
 stopt <- proc.time() #ends elapsed time of the simulation
 elapsed <- stopt - start
 print(elapsed) #prints elapsed time to console
 stopCluster(cluster) # terminate cluster
 
-##parameters for thinning
-#N=10 #number of species
-distances <- seq(.2, 5, by=.25)
+save("envThinDat", file="thinningData.RData")
 
-start <- proc.time() #begins elapsed time of the simulation
-envThinDat <- getAnswers(1, distances, pca=pca) 
-stopt <- proc.time()
-elapsed <- stopt - start
-print(elapsed) #prints elapsed time to console
+##heatplot
+library(lattice)
+thinMat <- matrix(unlist(envThinDat), nrow=24)
+rownames(thinMat) <- c("AUC.FULL", "AUC.RAND", "AUC.BIAS", c(paste0("AUC.THIN.", distances)), "AUC.MEAN")
+colnames(thinMat) <- c(paste0("Species ", seq(1,10)))
 
-
-
-
-
-
-
+level.p
 
